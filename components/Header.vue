@@ -49,7 +49,15 @@
 export default {
   methods: {
     // 用户退出
-    handleLogout() {}
+    handleLogout() {
+      // 调用清除方法
+      const { commit } = this.$store;
+      commit("user/clearUserInfo");
+      this.$message({
+        message: "退出成功",
+        type: "success"
+      });
+    }
   }
 };
 </script>
