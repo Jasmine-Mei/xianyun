@@ -14,21 +14,27 @@
 
     <el-form class="search-form-content" ref="form" label-width="80px">
       <el-form-item label="出发城市">
-        <!-- fetch-suggestions 返回输入建议的方法 -->
-        <!-- select 点击选中建议项时触发 -->
+        <!-- fetch-suggestions: 监听输入框的输入，可以在这个事件中请求API数据,类似input事件 -->
+        <!-- select: 点击展开列表选项时候触发 -->
         <el-autocomplete
           :fetch-suggestions="queryDepartSearch"
           placeholder="请搜索出发城市"
           @select="handleDepartSelect"
+          @blur="handleDepartBlur"
           class="el-autocomplete"
+          v-model="form.departCity"
         ></el-autocomplete>
       </el-form-item>
       <el-form-item label="到达城市">
+        <!-- fetch-suggestions: 监听输入框的输入，可以在这个事件中请求API数据,类似input事件 -->
+        <!-- select: 点击展开列表选项时候触发 -->
         <el-autocomplete
           :fetch-suggestions="queryDestSearch"
           placeholder="请搜索到达城市"
           @select="handleDestSelect"
+          @blur="handleDestBlur"
           class="el-autocomplete"
+          v-model="form.destCity"
         ></el-autocomplete>
       </el-form-item>
       <el-form-item label="出发时间">
@@ -38,6 +44,7 @@
           placeholder="请选择日期"
           style="width: 100%;"
           @change="handleDate"
+          v-model="form.departDate"
         >
         </el-date-picker>
       </el-form-item>
@@ -59,6 +66,8 @@
 </template>
 
 <script>
+// 时间转换的工具
+import moment from "moment";
 export default {
   data() {
     return {
@@ -66,39 +75,165 @@ export default {
         { icon: "iconfont icondancheng", name: "单程" },
         { icon: "iconfont iconshuangxiang", name: "往返" }
       ],
+      form: {
+        departCity: "", // 出发城市
+        departCode: "", // 出发城市代码
+        destCity: "", // 到达城市
+        destCode: "", // 到达城市代码
+        departDate: "" // 日期字符串
+      },
+      // 出发城市列表
+      departData: [],
+      // 到达城市列表
+      destData: [],
       currentTab: 0
     };
   },
   methods: {
     // tab切换时触发
-    handleSearchTab(item, index) {},
+    handleSearchTab(item, index) {
+      if (index == 1) {
+        this.$alert("目前暂不支持往返，请使用单程选票！", "提示", {
+          confirmButtonText: "确定",
+          type: "warning"
+        });
+      }
+    },
 
-    // 出发城市输入框获得焦点时触发
-    // value 是选中的值，cb是回调函数，接收要展示的列表
-    queryDepartSearch(value, cb) {
-      cb([{ value: 1 }, { value: 2 }, { value: 3 }]);
+    // 监听出发城市输入框的事件
+    // value是输入框的值
+    // cb可以接收数组，把数组列表展示出来
+    queryDepartSearch(value, callback) {
+      // 如果输入框没有值就直接返回
+      if (!value) {
+        return;
+      }
+      // 根据value请求城市列表
+      this.$axios({
+        url: "/airs/city",
+        // axios的get请求的参数使用params, 如果是post请求使用data
+        params: {
+          name: value
+        }
+      }).then(res => {
+        // data是数组，但是数组中的对象没有value值
+        const { data } = res.data;
+        // 给data中每一项都添加一个value属性 (forEach,map)
+        const newData = data.map(v => {
+          v.value = v.name.replace("市", "");
+          // map返回的数组由return组成的
+          return v;
+        });
+        // 把newData保存到data中
+        this.departData = newData;
+
+        // cb把数组展示到列表中, 数组中每一项必须是对象，对象中必须有value属性
+        callback(newData);
+      });
+    },
+
+    // 出发城市输入框失去焦点时候触发
+    handleDepartBlur() {
+      if (this.departData.length === 0) {
+        return;
+      }
+      // 默认获取数组中第一个城市
+      this.form.departCity = this.departData[0].value;
+      this.form.departCode = this.departData[0].sort;
     },
 
     // 目标城市输入框获得焦点时触发
     // value 是选中的值，cb是回调函数，接收要展示的列表
-    queryDestSearch(value, cb) {
-      cb([{ value: 1 }, { value: 2 }, { value: 3 }]);
+    queryDestSearch(value, callback) {
+      // 如果输入框没有值就直接返回
+      if (!value) {
+        return;
+      }
+      // 根据value请求城市列表
+      this.$axios({
+        url: "/airs/city",
+        // axios的get请求的参数使用params, 如果是post请求使用data
+        params: {
+          name: value
+        }
+      }).then(res => {
+        // data是数组，但是数组中的对象没有value值
+        const { data } = res.data;
+        // 给data中每一项都添加一个value属性 (forEach,map)
+        const newData = data.map(v => {
+          v.value = v.name.replace("市", "");
+          // map返回的数组由return组成的
+          return v;
+        });
+        // 把newData保存到data中
+        this.destData = newData;
+
+        // cb把数组展示到列表中, 数组中每一项必须是对象，对象中必须有value属性
+        callback(newData);
+      });
+    },
+
+    // 目标城市输入框失去焦点时候触发
+    handleDestBlur() {
+      if (this.departData.length === 0) {
+        return;
+      }
+      // 默认获取数组中第一个城市
+      this.form.destCity = this.destData[0].value;
+      this.form.destCode = this.destData[0].sort;
     },
 
     // 出发城市下拉选择时触发
-    handleDepartSelect(item) {},
+    handleDepartSelect(item) {
+      this.form.departCity = item.value;
+      this.form.departCode = item.sort;
+    },
 
     // 目标城市下拉选择时触发
-    handleDestSelect(item) {},
+    handleDestSelect(item) {
+      // 默认获取数组中第一个城市
+      this.form.destCity = item.value;
+      this.form.destCode = item.sort;
+    },
 
     // 确认选择日期时触发
-    handleDate(value) {},
+    // value是一个时间对象
+    handleDate(value) {
+      // 修改日期的格式
+      // console.log("测试打印日期：", value)
+      this.form.departDate = moment(value).format("YYYY-MM-DD");
+    },
 
     // 触发和目标城市切换时触发
-    handleReverse() {},
+    handleReverse() {
+      const { departCity, departCode, destCity, destCode } = this.form;
+      this.form.departCity = destCity;
+      this.form.departCode = destCode;
+      this.form.destCity = departCity;
+      this.form.destCode = departCode;
+    },
 
     // 提交表单是触发
-    handleSubmit() {}
+    handleSubmit() {
+      if (!this.form.departCity) {
+        this.$message.error("请输入出发城市");
+        return;
+      }
+      if (!this.form.destCity) {
+        this.$message.error("请输入到达城市");
+        return;
+      }
+      if (!this.form.departDate) {
+        this.$message.error("请选择时间");
+        return;
+      }
+      // 跳转到 /air/flights，保证该页面url的参数有5个参数
+      this.$router.push({
+        path: "/air/flights",
+        // query是url的参数
+        query: this.form
+      });
+    }
   },
   mounted() {}
 };
