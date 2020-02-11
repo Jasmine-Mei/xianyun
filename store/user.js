@@ -24,6 +24,7 @@ export const mutations = {
 }
 
 export const actions = {
+    // 登录
     login({ commit }, data) {
         return this.$axios({
             url: "/accounts/login",
@@ -34,6 +35,30 @@ export const actions = {
             // 保存到state
             commit('setUserInfo', data);
             return data;
+        })
+    },
+    register(stire, data) {
+        return this.$axios({
+            url: "/accounts/register",
+            method: "POST",
+            data: data
+        }).then(res => {
+            const data = res.data;
+            // 保存到state
+            commit('setUserInfo', data);
+            return data;
+        })
+    },
+    // 获取验证码
+    captcha(state, tel) {
+        console.log(tel);
+
+        return this.$axios({
+            url: "/captchas",
+            method: "POST",
+            data: { tel }
+        }).then(res => {
+            return res
         })
     }
 }
