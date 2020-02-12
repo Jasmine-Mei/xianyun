@@ -106,27 +106,18 @@ export default {
     queryDepartSearch(value, callback) {
       // 如果输入框没有值就直接返回
       if (!value) {
+        // 1.（bug）如果value是空的，把原来的城市列表清空
+        this.departData = [];
+        // 2.（bug）调用callback传入空数组，不会出现空白的加载中的下拉面板
+        callback([]);
         return;
       }
-      // 根据value请求城市列表
-      this.$axios({
-        url: "/airs/city",
-        // axios的get请求的参数使用params, 如果是post请求使用data
-        params: {
-          name: value
-        }
-      }).then(res => {
-        // data是数组，但是数组中的对象没有value值
-        const { data } = res.data;
-        // 给data中每一项都添加一个value属性 (forEach,map)
-        const newData = data.map(v => {
-          v.value = v.name.replace("市", "");
-          // map返回的数组由return组成的
-          return v;
-        });
+      /**
+       * 调用封装后的函数
+       */
+      this.querySearch(value).then(newData => {
         // 把newData保存到data中
-        this.departData = newData;
-
+        this.departDate = newData;
         // cb把数组展示到列表中, 数组中每一项必须是对象，对象中必须有value属性
         callback(newData);
       });
@@ -147,10 +138,34 @@ export default {
     queryDestSearch(value, callback) {
       // 如果输入框没有值就直接返回
       if (!value) {
+        // 如果value是空的，把原来的城市列表清空
+        this.destData = [];
+        // 调用cb传入空数组，不会出现空白的加载中的下拉面板
+        callback([]);
         return;
       }
+      this.querySearch(value).then(newData => {
+        //把newData保存到data中
+        this.destData = newData;
+        // cb把数组展示到列表中，数组中每一项必须是对象，对象中必须有value属性
+        callback(newData);
+      });
+    },
+
+    // 目标城市输入框失去焦点时候触发
+    handleDestBlur() {
+      if (this.departData.length === 0) {
+        return;
+      }
+      // 默认获取数组中第一个城市
+      this.form.destCity = this.destData[0].value;
+      this.form.destCode = this.destData[0].sort;
+    },
+
+    // 封装出发城市和到达城市的请求函数
+    querySearch(value) {
       // 根据value请求城市列表
-      this.$axios({
+      return this.$axios({
         url: "/airs/city",
         // axios的get请求的参数使用params, 如果是post请求使用data
         params: {
@@ -165,22 +180,8 @@ export default {
           // map返回的数组由return组成的
           return v;
         });
-        // 把newData保存到data中
-        this.destData = newData;
-
-        // cb把数组展示到列表中, 数组中每一项必须是对象，对象中必须有value属性
-        callback(newData);
+        return newData;
       });
-    },
-
-    // 目标城市输入框失去焦点时候触发
-    handleDestBlur() {
-      if (this.departData.length === 0) {
-        return;
-      }
-      // 默认获取数组中第一个城市
-      this.form.destCity = this.destData[0].value;
-      this.form.destCode = this.destData[0].sort;
     },
 
     // 出发城市下拉选择时触发
