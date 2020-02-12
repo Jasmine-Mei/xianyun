@@ -1,6 +1,6 @@
 <template>
   <div class="flight-item">
-    <div>
+    <div @click="isShow = !isShow">
       <!-- 显示的机票信息 -->
       <el-row type="flex" align="middle" class="flight-info">
         <el-col :span="6"> <span>东航 </span> MU5316 </el-col>
@@ -15,7 +15,8 @@
               <span>白云机场T1</span>
             </el-col>
             <el-col :span="8" class="flight-time">
-              <span>2时20分</span>
+              <!-- 相隔时间 -->
+              <span>{{ rankTime }}</span>
             </el-col>
             <el-col :span="8" class="flight-airport">
               <strong>22:50</strong>
@@ -28,7 +29,8 @@
         </el-col>
       </el-row>
     </div>
-    <div class="flight-recommend">
+
+    <div class="flight-recommend" v-if="isShow">
       <!-- 隐藏的座位信息列表 -->
       <el-row type="flex" justify="space-between" align="middle">
         <el-col :span="4">低价推荐</el-col>
@@ -60,12 +62,42 @@
 
 <script>
 export default {
+  data() {
+    return {
+      isShow: false // 是否展开列表
+    };
+  },
   props: {
     // 数据
     data: {
       type: Object,
       // 默认是空数组
       default: {}
+    }
+  },
+  // 计算属性
+  computed: {
+    rankTime() {
+      const end = this.data.arr_time.split(":");
+      const start = this.data.dep_time.split(":");
+
+      // 到达分钟和出发分钟
+      let endMin = end[0] * 60 + Number(end[1]);
+      let startMin = start[0] * 60 + Number(start[1]);
+
+      // 如果到达时间小于出发的时间，已经到达第二天
+      if (endMin < startMin) {
+        endMin += 24 * 60;
+      }
+
+      // 相隔分钟
+      const dis = endMin - startMin;
+
+      // 小时
+      const hours = Math.floor(dis / 60);
+      // 分钟
+      const min = dis % 60;
+      return `${hours}小时${min}分`;
     }
   }
 };
