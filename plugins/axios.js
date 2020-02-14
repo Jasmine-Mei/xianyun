@@ -1,7 +1,7 @@
 import { Message } from "element-ui";
 
-export default function ({ $axios, redirect }) {
-    $axios.onError(err => {
+export default function (data) {
+    data.$axios.onError(err => {
         const { statusCode, message } = err.response.data;
         // console.log(err.response);
 
