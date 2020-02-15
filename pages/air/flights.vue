@@ -35,9 +35,7 @@
       </div>
 
       <!-- 侧边栏 -->
-      <div class="aside">
-        <!-- 侧边栏组件 -->
-      </div>
+      <FlightsAside />
     </el-row>
   </section>
 </template>
@@ -47,8 +45,16 @@
 import FlightsListHead from "@/components/air/flightsListHead";
 import FlightsItem from "@/components/air/flightsItem";
 import FlightsFilters from "@/components/air/flightsFilters";
+import FlightsAside from "@/components/air/flightsAside";
 
 export default {
+  components: {
+    FlightsListHead,
+    FlightsItem,
+    FlightsFilters,
+    FlightsAside
+  },
+
   data() {
     return {
       // 机票总数据 （有info, flights, total, options这些属性）
@@ -91,29 +97,45 @@ export default {
     }
   },
 
-  components: {
-    FlightsListHead,
-    FlightsItem,
-    FlightsFilters
+  mounted() {
+    // 请求机票列表接口
+    this.getList();
   },
 
-  mounted() {
-    // 请求机票列表数据
-    this.$axios({
-      url: "/airs",
-      params: this.$route.query
-    }).then(res => {
-      // 总数据
-      this.flightsData = res.data;
-      // 备份一下数据, 注意res.data需要拷贝一份出来
-      this.cacheFlightsData = { ...res.data };
-
-      // 修改总条数
-      this.total = this.flightsData.total;
-    });
+  // watch可以监听实例下任何属性的变化
+  watch: {
+    // 文档地址：https://router.vuejs.org/zh/guide/advanced/navigation-guards
+    // 在当前路由改变，但是该组件被复用时调用
+    // to: 要跳转的页面路由对象
+    // from：要离开页面路有对象
+    // next 是必须要调用
+    beforeRouteUpdate(to, from, next) {
+      // 每次url变化时候把pageIndex初始化为1
+      this.pageIndex = 1;
+      // 请求机票列表数据
+      this.getList();
+      next();
+    }
   },
 
   methods: {
+    // 请求机票列表接口
+    getList() {
+      // 请求机票列表数据
+      this.$axios({
+        url: "/airs",
+        params: this.$route.query
+      }).then(res => {
+        // 总数据
+        this.flightsData = res.data;
+        // 备份一下数据, 注意res.data需要拷贝一份出来
+        this.cacheFlightsData = { ...res.data };
+
+        // 修改总条数
+        this.total = this.flightsData.total;
+      });
+    },
+
     // 切换条数时候触发的事件
     handleSizeChange(index) {
       this.pageSize = index;

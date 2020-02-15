@@ -55,7 +55,11 @@
             </el-col>
             <el-col :span="5" class="price"> ￥{{ item.settle_price }} </el-col>
             <el-col :span="3" class="choose-button">
-              <el-button type="warning" size="mini">
+              <el-button
+                type="warning"
+                size="mini"
+                @click="handleToOrder(item)"
+              >
                 选定
               </el-button>
               <p>剩余：{{ item.discount }}</p>
@@ -80,6 +84,20 @@ export default {
     data: {
       type: Object, // 声明data属性的类型
       default: {} // 如果组件调用时候不传data，采用默认值
+    }
+  },
+
+  methods: {
+    // 跳转到订单页面
+    handleToOrder(item) {
+      // 跳转到订单页，航班的id，座位的id
+      this.$router.push({
+        path: "/air/order",
+        query: {
+          id: this.data.id,
+          seat_xid: item.seat_xid
+        }
+      });
     }
   },
 

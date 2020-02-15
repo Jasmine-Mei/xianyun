@@ -51,7 +51,7 @@ export const actions = {
     },
     // 获取验证码
     captcha(state, tel) {
-        console.log(tel);
+        // console.log(tel);
 
         return this.$axios({
             url: "/captchas",
